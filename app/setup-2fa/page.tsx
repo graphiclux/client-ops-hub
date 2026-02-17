@@ -22,12 +22,28 @@ export default function Setup2FAPage() {
         "x-csrf-token": csrf
       }
     })
-      .then((res) => res.json())
-      .then((data) => {
-        setQr(data.qrCodeDataUrl);
-        setSecret(data.secret);
+      .then(async (res) => {
+        const payload = (await res.json().catch(() => null)) as
+          | { qrCodeDataUrl?: string; secret?: string; error?: string }
+          | null;
+
+        if (!res.ok) {
+          throw new Error(payload?.error || "Failed to initialize 2FA");
+        }
+
+        return payload;
       })
-      .catch(() => setError("Failed to initialize 2FA"));
+      .then((data) => {
+        setQr(data?.qrCodeDataUrl || null);
+        setSecret(data?.secret || null);
+        if (!data?.qrCodeDataUrl || !data?.secret) {
+          setError("2FA setup response was incomplete. Refresh and try again.");
+        }
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Failed to initialize 2FA";
+        setError(message);
+      });
   }, []);
 
   async function onVerify() {
