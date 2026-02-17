@@ -1,0 +1,16 @@
+﻿node_modules
+.next
+.env
+.env.local
+npm-debug.log*
+*.log
+coverage
+.prisma
+
+# TypeScript build cache
+*.tsbuildinfo
+
+
+# Local backups (avoid committing dumps)
+backups/
+

@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  CONTRACTOR
+  READONLY
+}
+
+enum ClientStatus {
+  LEAD
+  ACTIVE
+  ON_HOLD
+  PAST
+}
+
+enum ClientPermission {
+  VIEW
+  EDIT
+}
+
+enum SystemType {
+  WORDPRESS
+  WOOCOMMERCE
+  SHOPIFY
+  CLOUDFLARE
+  DNS
+  HOSTING
+  EMAIL
+  AWS
+  GRIDPANE
+  OTHER
+}
+
+enum MfaStatus {
+  ENABLED
+  DISABLED
+  UNKNOWN
+}
+
+enum NoteType {
+  CALL
+  EMAIL
+  DECISION
+  ISSUE
+  CHANGE
+  TASK
+}
+
+enum NoteVisibility {
+  PRIVATE
+  TEAM
+}
+
+enum EngagementType {
+  RETAINER
+  PROJECT
+  EMERGENCY
+  AUDIT
+}
+
+enum EngagementStage {
+  INTAKE
+  PROPOSAL
+  ACTIVE
+  WAITING
+  DONE
+}
+
+enum IntegrationProvider {
+  TRELLO
+  XERO
+}
+
+model User {
+  id                     String             @id @default(cuid())
+  name                   String?
+  email                  String             @unique
+  role                   Role               @default(READONLY)
+  googleSub              String?            @map("google_sub") @unique
+  totpEnabled            Boolean            @default(false) @map("totp_enabled")
+  totpSecretEncrypted    String?            @map("totp_secret_encrypted")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+  ownedClients           Client[]
+  clientMemberships      ClientUser[]
+  notes                  Note[]
+  integrationTokens      IntegrationToken[]
+  auditLogs              AuditLog[]
+
+  @@map("users")
+}
+
+model Client {
+  id             String        @id @default(cuid())
+  name           String
+  legalName      String?       @map("legal_name")
+  primaryDomain  String        @map("primary_domain")
+  status         ClientStatus  @default(LEAD)
+  tags           String[]
+  timezone       String        @default("UTC")
+  ownerUserId    String        @map("owner_user_id")
+  xeroContactId  String?       @map("xero_contact_id")
+  trelloBoardId  String?       @map("trello_board_id")
+  trelloListId   String?       @map("trello_list_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  owner          User          @relation(fields: [ownerUserId], references: [id])
+  members        ClientUser[]
+  contacts       Contact[]
+  systems        System[]
+  notes          Note[]
+  attachments    Attachment[]
+  engagements    Engagement[]
+
+  @@index([ownerUserId])
+  @@map("clients")
+}
+
+model ClientUser {
+  id          String           @id @default(cuid())
+  clientId    String           @map("client_id")
+  userId      String           @map("user_id")
+  permission  ClientPermission
+  client      Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, userId])
+  @@index([userId])
+  @@map("client_users")
+}
+
+model Contact {
+  id                     String    @id @default(cuid())
+  clientId               String    @map("client_id")
+  name                   String
+  roleTitle              String    @map("role_title")
+  email                  String?
+  phone                  String?
+  preferredContactMethod String?   @map("preferred_contact_method")
+  notesShort             String?   @map("notes_short")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  client                 Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  notes                  Note[]
+
+  @@index([clientId])
+  @@index([clientId, createdAt])
+  @@map("contacts")
+}
+
+model System {
+  id                String     @id @default(cuid())
+  clientId          String     @map("client_id")
+  type              SystemType
+  label             String
+  url               String?
+  adminUrl          String?    @map("admin_url")
+  usernameHint      String?    @map("username_hint")
+  vaultItemRef      String?    @map("vault_item_ref")
+  mfaStatus         MfaStatus  @default(UNKNOWN) @map("mfa_status")
+  lastVerifiedAt    DateTime?  @map("last_verified_at")
+  notes             String?
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  client            Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  linkedNotes       Note[]
+
+  @@index([clientId])
+  @@index([clientId, updatedAt])
+  @@map("systems")
+}
+
+model Note {
+  id                String         @id @default(cuid())
+  clientId          String         @map("client_id")
+  contactId         String?        @map("contact_id")
+  systemId          String?        @map("system_id")
+  type              NoteType
+  bodyMarkdown      String         @map("body_markdown")
+  visibility        NoteVisibility @default(TEAM)
+  createdByUserId   String         @map("created_by_user_id")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  client            Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contact           Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  system            System?        @relation(fields: [systemId], references: [id], onDelete: SetNull)
+  createdBy         User           @relation(fields: [createdByUserId], references: [id])
+  attachments       Attachment[]
+
+  @@index([clientId, createdAt])
+  @@map("notes")
+}
+
+model Attachment {
+  id          String    @id @default(cuid())
+  noteId      String?   @map("note_id")
+  clientId    String?   @map("client_id")
+  filename    String
+  mimeType    String    @map("mime_type")
+  size        Int
+  storagePath String    @map("storage_path")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  note        Note?     @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@map("attachments")
+}
+
+model Engagement {
+  id            String           @id @default(cuid())
+  clientId      String           @map("client_id")
+  type          EngagementType
+  title         String
+  stage         EngagementStage  @default(INTAKE)
+  trelloCardId  String?          @map("trello_card_id")
+  trelloCardUrl String?          @map("trello_card_url")
+  startDate     DateTime?        @map("start_date")
+  endDate       DateTime?        @map("end_date")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  client        Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, stage])
+  @@index([clientId, updatedAt])
+  @@map("engagements")
+}
+
+model IntegrationToken {
+  id                    String              @id @default(cuid())
+  userId                String              @map("user_id")
+  provider              IntegrationProvider
+  accessTokenEncrypted  String              @map("access_token_encrypted")
+  refreshTokenEncrypted String?             @map("refresh_token_encrypted")
+  expiresAt             DateTime?           @map("expires_at")
+  scope                 String?
+  tenantId              String?             @map("tenant_id")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, provider])
+  @@unique([userId, provider])
+  @@map("integration_tokens")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id")
+  action       String
+  entityType   String   @map("entity_type")
+  entityId     String?  @map("entity_id")
+  metadataJson Json?    @map("metadata_json")
+  ip           String?
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
