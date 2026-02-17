@@ -24,10 +24,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const secret = body.secret as string | undefined;
-  const code = body.code as string | undefined;
+  const secret = (body.secret as string | undefined)?.trim();
+  const code = (body.code as string | undefined)?.trim();
 
-  if (!secret || !code || code.length !== 6) {
+  if (!secret || !code || !/^\d{6}$/.test(code)) {
     return apiError("Invalid payload", 422);
   }
 

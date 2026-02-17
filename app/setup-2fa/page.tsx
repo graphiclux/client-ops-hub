@@ -33,15 +33,17 @@ export default function Setup2FAPage() {
   async function onVerify() {
     setError("");
     const csrf = getCsrfTokenFromCookie();
+    const normalizedCode = code.trim();
 
     const res = await fetch("/api/setup-2fa/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify({ code, secret })
+      body: JSON.stringify({ code: normalizedCode, secret })
     });
 
     if (!res.ok) {
-      setError("Invalid code. Try again.");
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(payload?.error || "Failed to enable 2FA. Try again.");
       return;
     }
 

@@ -26,9 +26,13 @@ export async function createQrDataUrl(otpauthUrl: string) {
 export function verifyTotpCode(secretBase32: string, code: string) {
   const totp = new OTPAuth.TOTP({
     issuer,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
     secret: OTPAuth.Secret.fromBase32(secretBase32)
   });
 
-  const delta = totp.validate({ token: code, window: 1 });
+  const normalizedCode = code.trim();
+  const delta = totp.validate({ token: normalizedCode, window: 2 });
   return delta !== null;
 }
