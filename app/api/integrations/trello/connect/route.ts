@@ -23,6 +23,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(url);
   } catch (error) {
     logError("trello.connect.failed", error, { userId: session.user.id });
-    return redirectForRequest(req, "/settings/integrations?trello=error");
+    const message = error instanceof Error ? error.message : String(error);
+    const code = message.includes("TRELLO_API_KEY")
+      ? "error_missing_api_key"
+      : message.includes("NEXTAUTH_URL")
+        ? "error_missing_nextauth_url"
+        : "error";
+    return redirectForRequest(req, `/settings/integrations?trello=${code}`);
   }
 }

@@ -6,9 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { XeroTenantSelector } from "@/components/client/xero-tenant-selector";
 
-export default async function IntegrationsPage() {
+const trelloMessages: Record<string, string> = {
+  connected: "Trello connected successfully.",
+  error_missing_api_key: "Trello API key is missing in server env (TRELLO_API_KEY).",
+  error_missing_nextauth_url: "NEXTAUTH_URL is missing in server env.",
+  error_missing_token_state: "Trello callback missing token/state. Check callback URL setup.",
+  error_callback: "Trello callback failed. Check app logs for details.",
+  error: "Trello connection failed. Check server logs."
+};
+
+export default async function IntegrationsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ trello?: string; xero?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) return null;
+  const resolvedSearchParams = await searchParams;
+  const trelloState = resolvedSearchParams.trello;
+  const trelloMessage = trelloState ? trelloMessages[trelloState] || trelloMessages.error : null;
 
   const tokens = await prisma.integrationToken.findMany({
     where: { userId: session.user.id },
@@ -23,6 +39,11 @@ export default async function IntegrationsPage() {
       <p className="text-sm text-muted-foreground">
         Need to change your login password? Go to <a className="text-primary hover:underline" href="/settings/password">Settings / Password</a>.
       </p>
+      {trelloMessage && (
+        <p className={`text-sm ${trelloState === "connected" ? "text-emerald-600" : "text-destructive"}`}>
+          {trelloMessage}
+        </p>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>

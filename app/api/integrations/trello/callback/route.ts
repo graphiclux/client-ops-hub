@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token") || req.nextUrl.searchParams.get("code");
 
   if (!state || !token) {
-    return NextResponse.json({ error: "Missing token/state" }, { status: 422 });
+    return redirectForRequest(req, "/settings/integrations?trello=error_missing_token_state");
   }
 
   try {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     return redirectForRequest(req, "/settings/integrations?trello=connected");
   } catch (error) {
     logError("trello.callback.get.failed", error);
-    return redirectForRequest(req, "/settings/integrations?trello=error");
+    return redirectForRequest(req, "/settings/integrations?trello=error_callback");
   }
 }
 
