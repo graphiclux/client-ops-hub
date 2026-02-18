@@ -108,6 +108,56 @@ export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
     }
   }
 
+  async function importXeroContactsCsv(file: File) {
+    setImporting(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const csrf = getCsrfTokenFromCookie();
+      const form = new FormData();
+      form.set("file", file);
+
+      const res = await fetch("/api/integrations/xero/import-contacts", {
+        method: "POST",
+        headers: {
+          ...(csrf ? { "x-csrf-token": csrf } : {})
+        },
+        body: form
+      });
+
+      const body = (await res.json().catch(() => null)) as
+        | {
+            error?: string;
+            totalRows?: number;
+            createdCount?: number;
+            skippedCount?: number;
+            errorCount?: number;
+            skipped?: Array<{ row: number; reason: string }>;
+            errors?: Array<{ row: number; error: string }>;
+          }
+        | null;
+
+      if (!res.ok) {
+        throw new Error(body?.error || "Xero import failed");
+      }
+
+      setResult(
+        `Xero import complete: created ${body?.createdCount || 0}/${body?.totalRows || 0}, skipped ${body?.skippedCount || 0}, errors ${body?.errorCount || 0}.`
+      );
+
+      if ((body?.errorCount || 0) > 0 && body?.errors?.length) {
+        setError(`Some rows failed. First error: row ${body.errors[0].row} - ${body.errors[0].error}`);
+      } else {
+        window.location.reload();
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Xero import failed");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   function applyTagPreset(tag: string) {
     const current = tags
       .split(",")
@@ -204,6 +254,21 @@ export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
           <Button type="button" variant="secondary" onClick={downloadTemplate}>
             Download CSV Template
           </Button>
+        </div>
+        <div className="space-y-2 rounded-xl border border-dashed border-border p-3">
+          <p className="text-xs text-muted-foreground">
+            Xero Contacts CSV import: upload the raw export with the <code>*ContactName</code> header.
+          </p>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            disabled={importing}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importXeroContactsCsv(file);
+            }}
+          />
+          <p className="text-xs text-muted-foreground">Creates clients as ACTIVE with <code>xero-import</code> tag.</p>
         </div>
 
         {result && <p className="text-xs text-emerald-600">{result}</p>}
