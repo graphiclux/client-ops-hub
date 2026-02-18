@@ -100,7 +100,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               </a>
             )}
           </div>
-          <ClientIntegrationsPanel clientId={client.id} xeroContactId={client.xeroContactId} hasTrelloList={Boolean(client.trelloListId)} />
+          <ClientIntegrationsPanel
+            clientId={client.id}
+            xeroContactId={client.xeroContactId}
+            hasTrelloList={Boolean(client.trelloListId)}
+            trelloBoardId={client.trelloBoardId}
+            trelloListId={client.trelloListId}
+            canEdit={canWrite}
+          />
         </CardContent>
       </Card>
 

@@ -65,3 +65,59 @@ export async function createTrelloCard(params: {
     throw error;
   });
 }
+
+export async function getTrelloBoardsAndLists(token: string) {
+  const key = env.TRELLO_API_KEY;
+  if (!key) {
+    throw new Error("TRELLO_API_KEY is required");
+  }
+
+  return withRetry(
+    async () => {
+      const url = new URL("https://api.trello.com/1/members/me/boards");
+      url.searchParams.set("key", key);
+      url.searchParams.set("token", token);
+      url.searchParams.set("fields", "id,name,url,closed");
+      url.searchParams.set("lists", "open");
+      url.searchParams.set("list_fields", "id,name,closed");
+
+      const res = await fetch(url.toString(), {
+        method: "GET",
+        headers: { Accept: "application/json" }
+      });
+
+      if (!res.ok) {
+        throw new Error(`Trello list fetch failed: ${res.status}`);
+      }
+
+      const boards = (await res.json()) as Array<{
+        id: string;
+        name: string;
+        url?: string;
+        closed?: boolean;
+        lists?: Array<{ id: string; name: string; closed?: boolean }>;
+      }>;
+
+      return boards
+        .filter((board) => !board.closed)
+        .map((board) => ({
+          id: board.id,
+          name: board.name,
+          url: board.url || null,
+          lists: (board.lists || []).filter((list) => !list.closed).map((list) => ({ id: list.id, name: list.name }))
+        }))
+        .filter((board) => board.lists.length > 0);
+    },
+    {
+      retries: 3,
+      shouldRetry: (error) => {
+        if (!(error instanceof Error)) return false;
+        const status = Number(error.message.split(":").pop()?.trim());
+        return Number.isFinite(status) && shouldRetryHttpStatus(status);
+      }
+    }
+  ).catch((error) => {
+    logError("trello.get_boards_lists.failed", error);
+    throw error;
+  });
+}

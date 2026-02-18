@@ -12,6 +12,7 @@ type Props = {
 };
 
 export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
+  const tagPresets = ["agency", "internal", "priority-high", "wordpress", "shopify", "maintenance"];
   const [name, setName] = useState("");
   const [primaryDomain, setPrimaryDomain] = useState("");
   const [legalName, setLegalName] = useState("");
@@ -107,6 +108,55 @@ export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
     }
   }
 
+  function applyTagPreset(tag: string) {
+    const current = tags
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (current.includes(tag)) return;
+    setTags([...current, tag].join(", "));
+  }
+
+  function downloadTemplate() {
+    const headers = [
+      "name",
+      "primaryDomain",
+      "legalName",
+      "status",
+      "tags",
+      "timezone",
+      "xeroContactId",
+      "trelloBoardId",
+      "trelloListId",
+      "ownerUserId",
+      "ownerEmail"
+    ];
+    const sampleRow = [
+      "Acme Marketing",
+      "acme.com",
+      "Acme Marketing LLC",
+      "ACTIVE",
+      "agency|wordpress|priority-high",
+      "America/New_York",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ];
+
+    const csv = `${headers.join(",")}\n${sampleRow.join(",")}\n`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "client-import-template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -126,6 +176,13 @@ export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
           <Input placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
           <Input placeholder="Timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </div>
+        <div className="flex flex-wrap gap-2">
+          {tagPresets.map((preset) => (
+            <Button key={preset} type="button" variant="secondary" onClick={() => applyTagPreset(preset)}>
+              + {preset}
+            </Button>
+          ))}
+        </div>
         <Button type="button" disabled={creating || !name.trim() || !primaryDomain.trim()} onClick={createClient}>
           {creating ? "Creating..." : "Create Client"}
         </Button>
@@ -144,6 +201,9 @@ export function ClientIntakePanel({ currentUserId, canManageClients }: Props) {
             }}
           />
           <p className="text-xs text-muted-foreground">Use <code>|</code> or <code>;</code> between tags inside the tags field.</p>
+          <Button type="button" variant="secondary" onClick={downloadTemplate}>
+            Download CSV Template
+          </Button>
         </div>
 
         {result && <p className="text-xs text-emerald-600">{result}</p>}
