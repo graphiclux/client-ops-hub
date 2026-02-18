@@ -10,10 +10,18 @@ export function redirectForRequest(req: NextRequest, path: string, status = 303)
   const forwardedHost = req.headers.get("x-forwarded-host");
   const forwardedProto = req.headers.get("x-forwarded-proto");
   const host = forwardedHost || req.headers.get("host");
+  const configuredBaseUrl = process.env.NEXTAUTH_URL?.trim();
+  const hostLooksLocal =
+    !!host &&
+    (/^localhost(?::\d+)?$/i.test(host) || /^127\.0\.0\.1(?::\d+)?$/i.test(host));
 
-  if (host) {
+  if (host && !hostLooksLocal) {
     const protocol = forwardedProto || (process.env.NODE_ENV === "development" ? "http" : "https");
     return NextResponse.redirect(`${protocol}://${host}${path}`, status);
+  }
+
+  if (configuredBaseUrl) {
+    return NextResponse.redirect(new URL(path, configuredBaseUrl), status);
   }
 
   return NextResponse.redirect(new URL(path, req.url), status);
