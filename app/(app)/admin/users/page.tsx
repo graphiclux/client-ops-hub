@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 import { auth } from "@/lib/auth/options";
@@ -35,6 +35,31 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">User Management</h2>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Create User</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm">
+          <form action="/api/admin/users" method="post" className="grid gap-2 md:grid-cols-5">
+            <input type="hidden" name="action" value="create" />
+            <input name="name" placeholder="Name" className="rounded-xl border border-border px-3 py-2" />
+            <input type="email" name="email" placeholder="Email" className="rounded-xl border border-border px-3 py-2" required />
+            <input type="password" name="password" placeholder="Temporary password (12+ chars)" className="rounded-xl border border-border px-3 py-2" minLength={12} required />
+            <select name="role" defaultValue="READONLY" className="rounded-xl border border-border px-3 py-2" required>
+              <option>ADMIN</option>
+              <option>MANAGER</option>
+              <option>CONTRACTOR</option>
+              <option>READONLY</option>
+            </select>
+            <button type="submit" className="rounded-xl bg-primary px-3 py-2 text-primary-foreground">
+              Create User
+            </button>
+          </form>
+          <p className="mt-2 text-xs text-muted-foreground">Only admins can create users. Users sign in with email/password and can change their own password in Settings.</p>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-3">
         {users.map((user) => (
           <Card key={user.id}>
@@ -45,6 +70,7 @@ export default async function AdminUsersPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span>{user.email}</span>
                 <form action="/api/admin/users" method="post" className="flex items-center gap-2">
+                  <input type="hidden" name="action" value="update-role" />
                   <input type="hidden" name="userId" value={user.id} />
                   <select name="role" defaultValue={user.role} className="rounded-xl border border-border px-3 py-2">
                     <option>ADMIN</option>
@@ -53,10 +79,19 @@ export default async function AdminUsersPage() {
                     <option>READONLY</option>
                   </select>
                   <button type="submit" className="rounded-xl bg-primary px-3 py-2 text-primary-foreground">
-                    Save
+                    Save Role
                   </button>
                 </form>
               </div>
+
+              <form action="/api/admin/users" method="post" className="flex flex-wrap items-center gap-2 rounded-xl border border-border p-3">
+                <input type="hidden" name="action" value="set-password" />
+                <input type="hidden" name="userId" value={user.id} />
+                <input type="password" name="password" placeholder="Set new password (12+ chars)" className="rounded-xl border border-border px-3 py-2" minLength={12} required />
+                <button type="submit" className="rounded-xl bg-secondary px-3 py-2 text-secondary-foreground">
+                  Set Password
+                </button>
+              </form>
 
               {user.role === "CONTRACTOR" && (
                 <div className="space-y-2 rounded-xl border border-border p-3">

@@ -6,7 +6,7 @@ Production-focused client relationship + systems inventory app for agencies work
 - Next.js 14 App Router + TypeScript
 - TailwindCSS + shadcn-style UI + lucide-react
 - Prisma + PostgreSQL 16
-- NextAuth (Google Workspace) + forced TOTP enrollment
+- NextAuth (email/password credentials) + forced TOTP enrollment
 - Redis + BullMQ
 - Dedicated BullMQ worker process (`worker` service in Docker Compose)
 - Docker Compose + Traefik + Let's Encrypt
@@ -24,7 +24,7 @@ Production-focused client relationship + systems inventory app for agencies work
 - `/login`
 
 ## Security Highlights
-- Domain-restricted Google login (`ALLOWED_GOOGLE_DOMAINS`)
+- Admin-created users with email/password authentication
 - Mandatory TOTP setup gate after first login
 - RBAC (ADMIN, MANAGER, CONTRACTOR, READONLY)
 - Optional manager scoping via `MANAGER_RESTRICT_TO_ASSIGNED_CLIENTS=true`

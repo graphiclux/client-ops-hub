@@ -1,8 +1,8 @@
-﻿import { getServerSession, type NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import { getServerSession, type NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { Role } from "@prisma/client";
+import { compare } from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { allowedGoogleDomains } from "@/lib/env";
 import { createAuditLog } from "@/lib/security/audit";
 
 export const authOptions: NextAuthOptions = {
@@ -13,37 +13,48 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login"
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        const email = credentials?.email?.toLowerCase().trim();
+        const password = credentials?.password;
+
+        if (!email || !password) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            passwordHash: true
+          }
+        });
+
+        if (!user?.passwordHash) {
+          return null;
+        }
+
+        const valid = await compare(password, user.passwordHash);
+        if (!valid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        };
+      }
     })
   ],
   callbacks: {
-    async signIn({ account, profile }) {
-      const email = profile?.email?.toLowerCase();
-      if (!email) return false;
-
-      const domain = email.split("@")[1]?.toLowerCase();
-      if (!domain || !allowedGoogleDomains.includes(domain)) {
-        return false;
-      }
-
-      await prisma.user.upsert({
-        where: { email },
-        update: {
-          name: profile?.name ?? undefined,
-          googleSub: account?.providerAccountId
-        },
-        create: {
-          email,
-          name: profile?.name,
-          googleSub: account?.providerAccountId,
-          role: Role.READONLY
-        }
-      });
-
-      return true;
-    },
     async jwt({ token }) {
       if (!token.email) return token;
 

@@ -14,22 +14,13 @@
    openssl rand -base64 32
    ```
 
-## 3) Google OAuth setup
-1. In Google Cloud Console, create OAuth client (Web app).
-2. Authorized JavaScript origins:
-   - `https://clients.graphiclux.com`
-3. Authorized redirect URIs:
-   - `https://clients.graphiclux.com/api/auth/callback/google`
-4. Configure OAuth consent screen for Workspace users.
-5. Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`.
-
-## 4) Xero app setup
+## 3) Xero app setup
 1. In Xero Developer portal, create an OAuth 2.0 app.
 2. Add redirect URI:
    - `https://clients.graphiclux.com/api/integrations/xero/callback`
 3. Set `XERO_CLIENT_ID`, `XERO_CLIENT_SECRET`, `XERO_REDIRECT_URI`.
 
-## 5) Trello setup
+## 4) Trello setup
 Preferred OAuth:
 - Set `TRELLO_API_KEY`
 - Set `TRELLO_REDIRECT_URI=https://clients.graphiclux.com/settings/integrations/trello-callback`
@@ -37,7 +28,7 @@ Preferred OAuth:
 Fallback token flow:
 - If Trello app settings require it, keep `TRELLO_CLIENT_ID`/`TRELLO_CLIENT_SECRET` for future OAuth code flow migration.
 
-## 6) Start stack
+## 5) Start stack
 ```bash
 docker compose build
 docker compose up -d
@@ -51,7 +42,7 @@ The stack includes:
 - `traefik`
 - `vaultwarden`
 
-## 7) Run migrations + seed admin
+## 6) Run migrations + seed admin
 ```bash
 docker compose exec app npm run prisma:migrate
 docker compose exec app npm run prisma:seed
@@ -59,15 +50,16 @@ docker compose exec app npm run prisma:seed
 
 Ensure `.env` includes:
 - `INITIAL_ADMIN_EMAIL=you@graphiclux.com`
+- `INITIAL_ADMIN_PASSWORD=<strong password, 12+ chars>`
 - Optional: `MANAGER_RESTRICT_TO_ASSIGNED_CLIENTS=true` to scope managers to owned/assigned clients only.
 
-## 8) Validate critical routes
+## 7) Validate critical routes
 - `https://clients.graphiclux.com/login`
-- `https://clients.graphiclux.com/setup-2fa` (after first Google sign-in)
+- `https://clients.graphiclux.com/setup-2fa` (after first password sign-in)
 - `https://clients.graphiclux.com/settings/integrations`
 - `https://clients.graphiclux.com/admin/users`
 
-## 9) Nightly backup setup
+## 8) Nightly backup setup
 1. Install `age` and either `rclone` or configure rsync target.
 2. Set env vars in backup shell context:
    - `AGE_RECIPIENT`
@@ -79,7 +71,7 @@ Ensure `.env` includes:
    0 2 * * * cd /opt/client-ops-hub && /bin/bash backups/nightly-backup.sh >> /var/log/clientops-backup.log 2>&1
    ```
 
-## 10) VPS hardening baseline
+## 9) VPS hardening baseline
 - UFW:
   ```bash
   sudo ufw allow 22/tcp
@@ -94,8 +86,8 @@ Ensure `.env` includes:
   sudo dpkg-reconfigure unattended-upgrades
   ```
 
-## 11) Post-deploy checklist
-- Confirm Google domain restriction via `ALLOWED_GOOGLE_DOMAINS`.
+## 10) Post-deploy checklist
+- Confirm only admin-created users can sign in.
 - Confirm first login forces `/setup-2fa`.
 - Confirm per-session 2FA challenge at `/verify-2fa` and optional "Remember this browser" behavior (`TWO_FACTOR_REMEMBER_DAYS`).
 - Confirm RBAC by testing ADMIN/MANAGER/CONTRACTOR/READONLY.

@@ -1,4 +1,4 @@
-﻿import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -14,10 +14,14 @@ async function main() {
     throw new Error(`Invalid role: ${role}`);
   }
 
-  const user = await prisma.user.upsert({
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (!existing) {
+    throw new Error(`User not found: ${email}`);
+  }
+
+  const user = await prisma.user.update({
     where: { email },
-    update: { role },
-    create: { email, role, name: email }
+    data: { role }
   });
 
   console.log(`Set ${user.email} to role ${user.role}`);

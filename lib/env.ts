@@ -5,9 +5,6 @@ const envSchema = z.object({
   DATABASE_URL: z.string().optional(),
   NEXTAUTH_URL: z.string().optional(),
   NEXTAUTH_SECRET: z.string().optional(),
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  ALLOWED_GOOGLE_DOMAINS: z.string().default("graphiclux.com"),
   REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
   MASTER_KEY: z.string().optional(),
   APP_ENCRYPTION_AAD: z.string().default("client-ops-hub"),
@@ -42,7 +39,3 @@ export function requireEnv<K extends keyof typeof env>(key: K): Exclude<(typeof 
   }
   return value as Exclude<(typeof env)[K], undefined>;
 }
-
-export const allowedGoogleDomains = env.ALLOWED_GOOGLE_DOMAINS.split(",")
-  .map((item) => item.trim().toLowerCase())
-  .filter(Boolean);

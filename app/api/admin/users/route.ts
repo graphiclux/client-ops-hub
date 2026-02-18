@@ -1,9 +1,12 @@
-﻿import { Role } from "@prisma/client";
+import { Role } from "@prisma/client";
+import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
 import { apiError, enforceCsrf } from "@/lib/http";
 import { createAuditLog } from "@/lib/security/audit";
+
+type Action = "create" | "update-role" | "set-password";
 
 export async function GET() {
   const session = await auth();
@@ -24,6 +27,11 @@ export async function GET() {
   return NextResponse.json({ users });
 }
 
+function parseAction(value: string | null | undefined): Action {
+  if (value === "create" || value === "set-password") return value;
+  return "update-role";
+}
+
 export async function POST(req: NextRequest) {
   if (!enforceCsrf(req)) return apiError("CSRF validation failed", 403);
 
@@ -31,17 +39,96 @@ export async function POST(req: NextRequest) {
   if (!session?.user || session.user.role !== "ADMIN") return apiError("Forbidden", 403);
 
   const contentType = req.headers.get("content-type") || "";
+  let action: Action = "update-role";
   let userId: string | null = null;
   let role: Role | null = null;
+  let email: string | null = null;
+  let name: string | null = null;
+  let password: string | null = null;
 
   if (contentType.includes("application/json")) {
     const body = await req.json();
-    userId = body.userId;
-    role = body.role;
+    action = parseAction(body.action as string | undefined);
+    userId = (body.userId as string | undefined) ?? null;
+    role = (body.role as Role | undefined) ?? null;
+    email = (body.email as string | undefined)?.toLowerCase().trim() ?? null;
+    name = (body.name as string | undefined)?.trim() ?? null;
+    password = (body.password as string | undefined) ?? null;
   } else {
     const form = await req.formData();
+    action = parseAction(form.get("action")?.toString());
     userId = form.get("userId")?.toString() ?? null;
     role = (form.get("role")?.toString() as Role) ?? null;
+    email = form.get("email")?.toString().toLowerCase().trim() ?? null;
+    name = form.get("name")?.toString().trim() ?? null;
+    password = form.get("password")?.toString() ?? null;
+  }
+
+  if (action === "create") {
+    if (!email || !role || !Object.values(Role).includes(role)) {
+      return apiError("Invalid payload", 422);
+    }
+
+    if (!password || password.length < 12) {
+      return apiError("Password must be at least 12 characters", 422);
+    }
+
+    const passwordHash = await hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: name || email,
+        role,
+        passwordHash
+      }
+    });
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: "USER_CREATE",
+      entityType: "User",
+      entityId: user.id,
+      request: req,
+      metadata: { role }
+    });
+
+    if (!contentType.includes("application/json")) {
+      return NextResponse.redirect(new URL("/admin/users", req.url));
+    }
+
+    return NextResponse.json({ user }, { status: 201 });
+  }
+
+  if (action === "set-password") {
+    if (!userId) {
+      return apiError("Invalid payload", 422);
+    }
+
+    if (!password || password.length < 12) {
+      return apiError("Password must be at least 12 characters", 422);
+    }
+
+    const passwordHash = await hash(password, 12);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash }
+    });
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: "USER_PASSWORD_SET",
+      entityType: "User",
+      entityId: user.id,
+      request: req
+    });
+
+    if (!contentType.includes("application/json")) {
+      return NextResponse.redirect(new URL("/admin/users", req.url));
+    }
+
+    return NextResponse.json({ ok: true });
   }
 
   if (!userId || !role || !Object.values(Role).includes(role)) {

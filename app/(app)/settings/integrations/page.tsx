@@ -20,6 +20,9 @@ export default async function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold">Integrations</h2>
+      <p className="text-sm text-muted-foreground">
+        Need to change your login password? Go to <a className="text-primary hover:underline" href="/settings/password">Settings / Password</a>.
+      </p>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>

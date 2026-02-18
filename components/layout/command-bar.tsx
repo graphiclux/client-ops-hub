@@ -17,11 +17,13 @@ const baseQuickActions = [
   { label: "Open Clients", href: "/clients" },
   { label: "Open Engagements", href: "/engagements" },
   { label: "Open Search", href: "/search" },
-  { label: "Open Integrations", href: "/settings/integrations" }
+  { label: "Open Integrations", href: "/settings/integrations" },
+  { label: "Open Password", href: "/settings/password" }
 ];
 
 const adminQuickActions = [
-  { label: "Open Admin Users", href: "/admin/users" }
+  { label: "Open Admin Users", href: "/admin/users" },
+  { label: "Open Audit Logs", href: "/admin/audit-logs" }
 ];
 
 export function CommandBar({ canAdmin }: { canAdmin: boolean }) {

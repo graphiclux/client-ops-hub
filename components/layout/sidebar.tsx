@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Home, Search, Settings, SquareKanban, Users, Shield } from "lucide-react";
+import { Home, Search, Settings, SquareKanban, Users, Shield, KeyRound } from "lucide-react";
 
 const baseNav = [
   { href: "/clients", label: "Clients", icon: Home },
   { href: "/engagements", label: "Engagements", icon: SquareKanban },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/settings/integrations", label: "Settings", icon: Settings }
+  { href: "/settings/integrations", label: "Integrations", icon: Settings },
+  { href: "/settings/password", label: "Password", icon: KeyRound }
 ];
 
 const adminNav = [
