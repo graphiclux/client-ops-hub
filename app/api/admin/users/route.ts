@@ -9,7 +9,18 @@ export async function GET() {
   const session = await auth();
   if (!session?.user || session.user.role !== "ADMIN") return apiError("Forbidden", 403);
 
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+  const users = await prisma.user.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      totpEnabled: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
   return NextResponse.json({ users });
 }
 

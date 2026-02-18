@@ -1,16 +1,21 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Home, Search, Settings, SquareKanban, Users, Shield } from "lucide-react";
 
-const nav = [
+const baseNav = [
   { href: "/clients", label: "Clients", icon: Home },
   { href: "/engagements", label: "Engagements", icon: SquareKanban },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/settings/integrations", label: "Settings", icon: Settings },
+  { href: "/settings/integrations", label: "Settings", icon: Settings }
+];
+
+const adminNav = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: Shield }
 ];
 
-export function Sidebar() {
+export function Sidebar({ canAdmin }: { canAdmin: boolean }) {
+  const nav = canAdmin ? [...baseNav, ...adminNav] : baseNav;
+
   return (
     <aside className="hidden w-64 shrink-0 border-r border-border bg-card p-4 lg:block">
       <div className="mb-8 px-3">

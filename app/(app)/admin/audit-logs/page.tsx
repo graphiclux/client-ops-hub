@@ -7,7 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function AuditLogsPage() {
   const session = await auth();
-  if (session?.user.role !== "ADMIN") {
+  if (!session?.user) {
+    redirect("/login");
+  }
+  if (session.user.role !== "ADMIN") {
     redirect("/clients");
   }
 

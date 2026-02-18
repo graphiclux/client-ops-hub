@@ -14,9 +14,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar canAdmin={session.user.role === "ADMIN"} />
       <main className="flex min-h-screen flex-1 flex-col">
-        <CommandBar />
+        <CommandBar canAdmin={session.user.role === "ADMIN"} />
         <section className="p-4 md:p-8">{children}</section>
       </main>
     </div>

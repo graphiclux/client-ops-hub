@@ -649,9 +649,9 @@ export function ClientRecordsManager({
               </Button>
             </div>
           )}
-          {hasMoreEngagements && (
-            <Button type="button" variant="secondary" disabled={loadingMoreEngagements} onClick={loadMoreEngagements}>
-              {loadingMoreEngagements ? "Loading..." : "Load More Engagements"}
+          {hasMoreSystems && (
+            <Button type="button" variant="secondary" disabled={loadingMoreSystems} onClick={loadMoreSystems}>
+              {loadingMoreSystems ? "Loading..." : "Load More Systems"}
             </Button>
           )}
         </CardContent>
@@ -750,9 +750,9 @@ export function ClientRecordsManager({
               </Button>
             </div>
           )}
-          {hasMoreSystems && (
-            <Button type="button" variant="secondary" disabled={loadingMoreSystems} onClick={loadMoreSystems}>
-              {loadingMoreSystems ? "Loading..." : "Load More Systems"}
+          {hasMoreEngagements && (
+            <Button type="button" variant="secondary" disabled={loadingMoreEngagements} onClick={loadMoreEngagements}>
+              {loadingMoreEngagements ? "Loading..." : "Load More Engagements"}
             </Button>
           )}
         </CardContent>

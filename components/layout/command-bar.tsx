@@ -13,15 +13,22 @@ type SearchResults = {
 
 const emptyResults: SearchResults = { clients: [], notes: [], systems: [] };
 
-const quickActions = [
+const baseQuickActions = [
   { label: "Open Clients", href: "/clients" },
   { label: "Open Engagements", href: "/engagements" },
   { label: "Open Search", href: "/search" },
-  { label: "Open Integrations", href: "/settings/integrations" },
+  { label: "Open Integrations", href: "/settings/integrations" }
+];
+
+const adminQuickActions = [
   { label: "Open Admin Users", href: "/admin/users" }
 ];
 
-export function CommandBar() {
+export function CommandBar({ canAdmin }: { canAdmin: boolean }) {
+  const quickActions = useMemo(
+    () => (canAdmin ? [...baseQuickActions, ...adminQuickActions] : baseQuickActions),
+    [canAdmin]
+  );
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults>(emptyResults);
@@ -68,7 +75,7 @@ export function CommandBar() {
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return quickActions;
     return quickActions.filter((action) => action.label.toLowerCase().includes(trimmed));
-  }, [query]);
+  }, [query, quickActions]);
 
   function navigate(href: string) {
     window.location.href = href;

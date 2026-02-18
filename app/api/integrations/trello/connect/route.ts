@@ -1,11 +1,11 @@
-﻿import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
 import { trelloAuthUrl } from "@/lib/integrations/trello";
 import { issueOauthState } from "@/lib/security/oauth-state";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { logError } from "@/lib/telemetry";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,6 +22,6 @@ export async function GET() {
     return NextResponse.redirect(url);
   } catch (error) {
     logError("trello.connect.failed", error, { userId: session.user.id });
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/settings/integrations?trello=error`);
+    return NextResponse.redirect(new URL("/settings/integrations?trello=error", req.url));
   }
 }

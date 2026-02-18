@@ -24,6 +24,16 @@ export async function POST(req: NextRequest) {
   const canWrite = await canAccessClient(session.user, clientId, true);
   if (!canWrite) return apiError("Forbidden", 403);
 
+  if (noteId) {
+    const note = await prisma.note.findUnique({
+      where: { id: noteId },
+      select: { id: true, clientId: true }
+    });
+
+    if (!note) return apiError("Note not found", 404);
+    if (note.clientId !== clientId) return apiError("noteId does not belong to clientId", 422);
+  }
+
   const saved = await saveAttachment(file);
 
   const attachment = await prisma.attachment.create({

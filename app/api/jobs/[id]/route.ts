@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const dataUserId = (job.data as { userId?: string } | undefined)?.userId;
   const isPrivileged = session.user.role === "ADMIN" || session.user.role === "MANAGER";
 
-  if (!isPrivileged && dataUserId && dataUserId !== session.user.id) {
+  if (!isPrivileged && dataUserId !== session.user.id) {
     return apiError("Forbidden", 403);
   }
 
