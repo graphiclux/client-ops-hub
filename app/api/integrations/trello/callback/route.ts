@@ -1,7 +1,7 @@
-﻿import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
-import { apiError, enforceCsrf } from "@/lib/http";
+import { apiError, enforceCsrf, redirectForRequest } from "@/lib/http";
 import { upsertIntegrationToken } from "@/lib/integrations/tokens";
 import { validateOauthState } from "@/lib/security/oauth-state";
 import { createAuditLog } from "@/lib/security/audit";
@@ -46,10 +46,10 @@ export async function GET(req: NextRequest) {
 
   try {
     await saveToken(req, token, state);
-    return NextResponse.redirect(new URL("/settings/integrations?trello=connected", req.url));
+    return redirectForRequest(req, "/settings/integrations?trello=connected");
   } catch (error) {
     logError("trello.callback.get.failed", error);
-    return NextResponse.redirect(new URL("/settings/integrations?trello=error", req.url));
+    return redirectForRequest(req, "/settings/integrations?trello=error");
   }
 }
 

@@ -1,6 +1,7 @@
 ﻿import { IntegrationProvider } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
+import { redirectForRequest } from "@/lib/http";
 import { exchangeXeroCode } from "@/lib/integrations/xero";
 import { upsertIntegrationToken } from "@/lib/integrations/tokens";
 import { validateOauthState } from "@/lib/security/oauth-state";
@@ -45,9 +46,9 @@ export async function GET(req: NextRequest) {
       metadata: { provider: "XERO" }
     });
 
-    return NextResponse.redirect(new URL("/settings/integrations?xero=connected", req.url));
+    return redirectForRequest(req, "/settings/integrations?xero=connected");
   } catch (error) {
     logError("xero.callback.failed", error, { userId: session.user.id });
-    return NextResponse.redirect(new URL("/settings/integrations?xero=error", req.url));
+    return redirectForRequest(req, "/settings/integrations?xero=error");
   }
 }

@@ -13,7 +13,7 @@ const createSchema = z.object({
   status: z.enum(["LEAD", "ACTIVE", "ON_HOLD", "PAST"]).default("LEAD"),
   tags: z.array(z.string()).default([]),
   timezone: z.string().default("UTC"),
-  ownerUserId: z.string(),
+  ownerUserId: z.string().optional(),
   xeroContactId: z.string().optional().nullable(),
   trelloBoardId: z.string().optional().nullable(),
   trelloListId: z.string().optional().nullable()
@@ -55,8 +55,16 @@ export async function POST(req: NextRequest) {
 
   if (session.user.role === "CONTRACTOR") return apiError("Forbidden", 403);
 
+  const ownerUserId = parsed.data.ownerUserId || session.user.id;
+  if (ownerUserId !== session.user.id && session.user.role !== "ADMIN") {
+    return apiError("Forbidden", 403);
+  }
+
   const client = await prisma.client.create({
-    data: parsed.data
+    data: {
+      ...parsed.data,
+      ownerUserId
+    }
   });
 
   await createAuditLog({

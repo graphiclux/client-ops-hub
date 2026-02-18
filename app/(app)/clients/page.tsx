@@ -6,12 +6,17 @@ import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ClientIntakePanel } from "@/components/client/client-intake-panel";
 
 export default async function ClientsPage() {
   const session = await auth();
+  if (!session?.user) {
+    return null;
+  }
+  const canManageClients = session.user.role === "ADMIN" || session.user.role === "MANAGER";
 
   const clients = await prisma.client.findMany({
-    where: session?.user ? buildClientAccessWhere(session.user) : undefined,
+    where: buildClientAccessWhere(session.user),
     include: {
       owner: { select: { name: true, email: true } },
       notes: { select: { createdAt: true }, orderBy: { createdAt: "desc" }, take: 1 }
@@ -25,6 +30,7 @@ export default async function ClientsPage() {
         <h2 className="text-2xl font-semibold">Clients</h2>
         <p className="text-sm text-muted-foreground">Relationship + systems inventory</p>
       </div>
+      <ClientIntakePanel currentUserId={session.user.id} canManageClients={canManageClients} />
       <Table>
         <TableHeader>
           <TableRow>

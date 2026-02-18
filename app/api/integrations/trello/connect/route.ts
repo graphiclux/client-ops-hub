@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
+import { redirectForRequest } from "@/lib/http";
 import { trelloAuthUrl } from "@/lib/integrations/trello";
 import { issueOauthState } from "@/lib/security/oauth-state";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
@@ -22,6 +23,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(url);
   } catch (error) {
     logError("trello.connect.failed", error, { userId: session.user.id });
-    return NextResponse.redirect(new URL("/settings/integrations?trello=error", req.url));
+    return redirectForRequest(req, "/settings/integrations?trello=error");
   }
 }

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
-import { apiError, enforceCsrf } from "@/lib/http";
+import { apiError, enforceCsrf, redirectForRequest } from "@/lib/http";
 import { canAccessClient } from "@/lib/auth/client-access";
 import { createAuditLog } from "@/lib/security/audit";
 
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
   await createAuditLog({ userId: session.user.id, action: "NOTE_CREATE", entityType: "Note", entityId: note.id, request: req });
 
   if (!contentType.includes("application/json")) {
-    return NextResponse.redirect(new URL(`/clients/${note.clientId}`, req.url));
+    return redirectForRequest(req, `/clients/${note.clientId}`);
   }
 
   return NextResponse.json({ note }, { status: 201 });
