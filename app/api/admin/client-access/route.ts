@@ -1,8 +1,8 @@
-﻿import { ClientPermission } from "@prisma/client";
+import { ClientPermission } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
-import { apiError, enforceCsrf } from "@/lib/http";
+import { apiError, enforceCsrf, redirectForRequest } from "@/lib/http";
 import { createAuditLog } from "@/lib/security/audit";
 
 type AccessAction = "grant" | "revoke";
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!contentType.includes("application/json")) {
-      return NextResponse.redirect(new URL("/admin/users", req.url));
+      return redirectForRequest(req, "/admin/users");
     }
 
     return NextResponse.json({ ok: true });
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (!contentType.includes("application/json")) {
-    return NextResponse.redirect(new URL("/admin/users", req.url));
+    return redirectForRequest(req, "/admin/users");
   }
 
   return NextResponse.json({ membership });

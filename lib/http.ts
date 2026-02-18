@@ -6,6 +6,19 @@ export function apiError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+export function redirectForRequest(req: NextRequest, path: string, status = 303) {
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const host = forwardedHost || req.headers.get("host");
+
+  if (host) {
+    const protocol = forwardedProto || (process.env.NODE_ENV === "development" ? "http" : "https");
+    return NextResponse.redirect(`${protocol}://${host}${path}`, status);
+  }
+
+  return NextResponse.redirect(new URL(path, req.url), status);
+}
+
 function hasSameOrigin(req: NextRequest) {
   const origin = req.headers.get("origin");
   const host = req.headers.get("host");

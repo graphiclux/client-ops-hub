@@ -3,7 +3,7 @@ import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
-import { apiError, enforceCsrf } from "@/lib/http";
+import { apiError, enforceCsrf, redirectForRequest } from "@/lib/http";
 import { createAuditLog } from "@/lib/security/audit";
 
 type Action = "create" | "update-role" | "set-password";
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!contentType.includes("application/json")) {
-      return NextResponse.redirect(new URL("/admin/users", req.url));
+      return redirectForRequest(req, "/admin/users");
     }
 
     return NextResponse.json({ user }, { status: 201 });
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!contentType.includes("application/json")) {
-      return NextResponse.redirect(new URL("/admin/users", req.url));
+      return redirectForRequest(req, "/admin/users");
     }
 
     return NextResponse.json({ ok: true });
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
   await createAuditLog({ userId: session.user.id, action: "USER_ROLE_UPDATE", entityType: "User", entityId: user.id, request: req, metadata: { role } });
 
   if (!contentType.includes("application/json")) {
-    return NextResponse.redirect(new URL("/admin/users", req.url));
+    return redirectForRequest(req, "/admin/users");
   }
 
   return NextResponse.json({ user });
