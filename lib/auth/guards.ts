@@ -16,7 +16,7 @@ export async function requireAuth(options: GuardOptions = {}) {
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
-  if (!session.user.totpEnabled) {
+  if (!session.user.isServiceAccount && !session.user.totpEnabled) {
     return {
       error: NextResponse.json({ error: "2FA required" }, { status: 403 }),
       redirect: NextResponse.redirect(new URL("/setup-2fa", process.env.NEXTAUTH_URL))

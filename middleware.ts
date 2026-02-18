@@ -41,7 +41,9 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  if (!token.totpEnabled && !pathname.startsWith("/setup-2fa") && !pathname.startsWith("/api/setup-2fa")) {
+  const isServiceAccount = Boolean(token.isServiceAccount);
+
+  if (!isServiceAccount && !token.totpEnabled && !pathname.startsWith("/setup-2fa") && !pathname.startsWith("/api/setup-2fa")) {
     const response = NextResponse.redirect(new URL("/setup-2fa", req.url));
     ensureCsrfCookie(req, response);
     return response;
@@ -52,6 +54,7 @@ export async function middleware(req: NextRequest) {
   const hasValidTwoFactorSession = await isValidTwoFactorSessionToken(twoFactorSession, token.userId as string, sessionMarker);
 
   const needsChallenge =
+    !isServiceAccount &&
     Boolean(token.totpEnabled) &&
     !hasValidTwoFactorSession &&
     !pathname.startsWith("/verify-2fa") &&

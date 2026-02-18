@@ -41,7 +41,7 @@ export default async function AdminUsersPage() {
           <CardTitle className="text-base">Create User</CardTitle>
         </CardHeader>
         <CardContent className="text-sm">
-          <form action="/api/admin/users" method="post" className="grid gap-2 md:grid-cols-5">
+          <form action="/api/admin/users" method="post" className="grid gap-2 md:grid-cols-6">
             <input type="hidden" name="action" value="create" />
             <input name="name" placeholder="Name" className="rounded-xl border border-border px-3 py-2" />
             <input type="email" name="email" placeholder="Email" className="rounded-xl border border-border px-3 py-2" required />
@@ -49,9 +49,14 @@ export default async function AdminUsersPage() {
             <select name="role" defaultValue="READONLY" className="rounded-xl border border-border px-3 py-2" required>
               <option>ADMIN</option>
               <option>MANAGER</option>
-              <option>CONTRACTOR</option>
-              <option>READONLY</option>
+                <option>CONTRACTOR</option>
+                <option>READONLY</option>
             </select>
+            <label className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs">
+              <input type="hidden" name="isServiceAccount" value="false" />
+              <input type="checkbox" name="isServiceAccount" value="true" />
+              Service account (2FA exempt)
+            </label>
             <button type="submit" className="rounded-xl bg-primary px-3 py-2 text-primary-foreground">
               Create User
             </button>
@@ -68,7 +73,10 @@ export default async function AdminUsersPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span>{user.email}</span>
+                <span>
+                  {user.email}
+                  {user.isServiceAccount && <span className="ml-2 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide">service</span>}
+                </span>
                 <form action="/api/admin/users" method="post" className="flex items-center gap-2">
                   <input type="hidden" name="action" value="update-role" />
                   <input type="hidden" name="userId" value={user.id} />
@@ -78,6 +86,11 @@ export default async function AdminUsersPage() {
                     <option>CONTRACTOR</option>
                     <option>READONLY</option>
                   </select>
+                  <label className="flex items-center gap-1 text-xs">
+                    <input type="hidden" name="isServiceAccount" value="false" />
+                    <input type="checkbox" name="isServiceAccount" value="true" defaultChecked={user.isServiceAccount} />
+                    Service
+                  </label>
                   <button type="submit" className="rounded-xl bg-primary px-3 py-2 text-primary-foreground">
                     Save Role
                   </button>

@@ -85,6 +85,7 @@ model User {
   name                   String?
   email                  String             @unique
   passwordHash           String?            @map("password_hash")
+  isServiceAccount       Boolean            @default(false) @map("is_service_account")
   role                   Role               @default(READONLY)
   googleSub              String?            @map("google_sub") @unique
   totpEnabled            Boolean            @default(false) @map("totp_enabled")

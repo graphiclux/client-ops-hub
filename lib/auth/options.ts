@@ -60,13 +60,14 @@ export const authOptions: NextAuthOptions = {
 
       const user = await prisma.user.findUnique({
         where: { email: token.email },
-        select: { id: true, role: true, totpEnabled: true }
+        select: { id: true, role: true, totpEnabled: true, isServiceAccount: true }
       });
 
       if (user) {
         token.userId = user.id;
         token.role = user.role;
         token.totpEnabled = user.totpEnabled;
+        token.isServiceAccount = user.isServiceAccount;
       }
 
       return token;
@@ -79,6 +80,7 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token.userId as string;
       session.user.role = token.role as Role;
       session.user.totpEnabled = Boolean(token.totpEnabled);
+      session.user.isServiceAccount = Boolean(token.isServiceAccount);
       return session;
     }
   },

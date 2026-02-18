@@ -7,6 +7,7 @@ declare module "next-auth" {
       id: string;
       role: Role;
       totpEnabled: boolean;
+      isServiceAccount: boolean;
     };
   }
 }
@@ -16,5 +17,6 @@ declare module "next-auth/jwt" {
     userId?: string;
     role?: Role;
     totpEnabled?: boolean;
+    isServiceAccount?: boolean;
   }
 }

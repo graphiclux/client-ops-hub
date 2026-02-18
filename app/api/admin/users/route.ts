@@ -19,6 +19,7 @@ export async function GET() {
       name: true,
       email: true,
       role: true,
+      isServiceAccount: true,
       totpEnabled: true,
       createdAt: true,
       updatedAt: true
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
   let email: string | null = null;
   let name: string | null = null;
   let password: string | null = null;
+  let isServiceAccount = false;
 
   if (contentType.includes("application/json")) {
     const body = await req.json();
@@ -54,6 +56,7 @@ export async function POST(req: NextRequest) {
     email = (body.email as string | undefined)?.toLowerCase().trim() ?? null;
     name = (body.name as string | undefined)?.trim() ?? null;
     password = (body.password as string | undefined) ?? null;
+    isServiceAccount = Boolean(body.isServiceAccount);
   } else {
     const form = await req.formData();
     action = parseAction(form.get("action")?.toString());
@@ -62,6 +65,7 @@ export async function POST(req: NextRequest) {
     email = form.get("email")?.toString().toLowerCase().trim() ?? null;
     name = form.get("name")?.toString().trim() ?? null;
     password = form.get("password")?.toString() ?? null;
+    isServiceAccount = (form.get("isServiceAccount")?.toString() || "").toLowerCase() === "true";
   }
 
   if (action === "create") {
@@ -80,7 +84,8 @@ export async function POST(req: NextRequest) {
         email,
         name: name || email,
         role,
-        passwordHash
+        passwordHash,
+        isServiceAccount
       }
     });
 
@@ -90,7 +95,7 @@ export async function POST(req: NextRequest) {
       entityType: "User",
       entityId: user.id,
       request: req,
-      metadata: { role }
+      metadata: { role, isServiceAccount }
     });
 
     if (!contentType.includes("application/json")) {
@@ -137,10 +142,17 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { role }
+    data: { role, isServiceAccount }
   });
 
-  await createAuditLog({ userId: session.user.id, action: "USER_ROLE_UPDATE", entityType: "User", entityId: user.id, request: req, metadata: { role } });
+  await createAuditLog({
+    userId: session.user.id,
+    action: "USER_ROLE_UPDATE",
+    entityType: "User",
+    entityId: user.id,
+    request: req,
+    metadata: { role, isServiceAccount }
+  });
 
   if (!contentType.includes("application/json")) {
     return redirectForRequest(req, "/admin/users");
