@@ -1,0 +1,8 @@
+services:
+  app:
+    image: ghcr.io/graphiclux/client-ops-hub:${APP_IMAGE_TAG:-latest}
+    build: null
+
+  worker:
+    image: ghcr.io/graphiclux/client-ops-hub:${APP_IMAGE_TAG:-latest}
+    build: null

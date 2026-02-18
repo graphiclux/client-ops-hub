@@ -30,8 +30,8 @@ Fallback token flow:
 
 ## 5) Start stack
 ```bash
-docker compose build
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app worker
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 The stack includes:
@@ -41,6 +41,12 @@ The stack includes:
 - `redis`
 - `traefik`
 - `vaultwarden`
+
+For local development builds, keep using:
+```bash
+docker compose build
+docker compose up -d
+```
 
 ## 6) Run migrations + seed admin
 ```bash
@@ -93,3 +99,16 @@ Ensure `.env` includes:
 - Confirm RBAC by testing ADMIN/MANAGER/CONTRACTOR/READONLY.
 - Confirm Trello card creation and Xero invoice summary call.
 - Confirm Vault references are used instead of plaintext secrets.
+
+## 11) Fast deploy updates
+After each push to `main`, GitHub Actions publishes a fresh image to GHCR (`ghcr.io/graphiclux/client-ops-hub`).
+
+On server:
+```bash
+cd /opt/client-ops-hub
+git fetch origin
+git pull --ff-only origin main
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app worker
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d app worker
+docker compose exec app npm run prisma:migrate
+```

@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.github
+.env
+.env.*
+*.log
+npm-debug.log*
+coverage
+.prisma
+backups
+*.tsbuildinfo
+.vscode

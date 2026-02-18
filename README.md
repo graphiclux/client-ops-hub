@@ -45,6 +45,10 @@ Production-focused client relationship + systems inventory app for agencies work
 ## Docker Deploy
 Use `docs/DEPLOYMENT.md` for full Hetzner setup.
 
+### Faster production deploys
+- GitHub Actions workflow `.github/workflows/docker-publish.yml` pushes app images to GHCR on every `main` push.
+- Use `docker-compose.prod.yml` on server to pull prebuilt images instead of rebuilding locally.
+
 ## Notes
 - Attachment storage is local volume (`/data/uploads`) with adapter structure prepared for S3-compatible storage in phase 2.
 - Trello supports OAuth callback path and secure per-user token storage fallback.
